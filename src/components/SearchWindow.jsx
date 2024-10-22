@@ -37,7 +37,7 @@ const SearchWindow = () => {
     recognition.onresult = (event) => {
       const spokenQuery = event.results[0][0].transcript;
       setQuery(spokenQuery);
-      handleSearch(spokenQuery);
+      handleSearch(spokenQuery);  // Trigger LLM search via button/enter
     };
 
     recognition.onspeechend = () => {
@@ -51,8 +51,41 @@ const SearchWindow = () => {
     };
   };
 
+  // Fetch data from Sanity in real-time as user types
+  useEffect(() => {
+    const fetchSanityResults = async () => {
+      if (!query.trim()) {
+        setResults([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const queryStr = `*[_type in ["dentalTopics", "faq", "articles"] && (title match "${query}*" || question match "${query}*")]{
+          title,
+          question,
+          description,
+          content,
+          answer,
+          _id
+        }`;
+
+        const fetchedResults = await client.fetch(queryStr);
+        setResults(fetchedResults);
+        setError("");
+      } catch (error) {
+        console.error("Error fetching from Sanity:", error);
+        setError("Error fetching results, please try again later.");
+      }
+      setLoading(false);
+    };
+
+    fetchSanityResults();
+  }, [query]);
+
+  // Handle LLM search only when user presses enter or clicks Search
   const handleSearch = async (searchQuery = query) => {
-    if (searchQuery.trim() === "") {
+    if (typeof searchQuery !== 'string' || searchQuery.trim() === "") {
       setError("Please enter a valid dental search term");
       return;
     }
@@ -60,6 +93,7 @@ const SearchWindow = () => {
     await fetchFromGroqBackend(searchQuery);
   };
 
+  // Fetch response from the Groq backend (LLM search)
   const fetchFromGroqBackend = async (searchQuery) => {
     setLoading(true);
     try {
@@ -87,9 +121,10 @@ const SearchWindow = () => {
     setLoading(false);
   };
 
+  // Handle pressing "Enter" key to trigger search
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
-      handleSearch();
+      handleSearch(query); // Trigger search on pressing Enter
     }
   };
 
@@ -113,7 +148,7 @@ const SearchWindow = () => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleKeyDown}  // Handle pressing Enter here
             className="w-full p-4 outline-none bg-transparent"
             placeholder="Search dental topics..."
             aria-label="Search for dental topics"
@@ -127,7 +162,7 @@ const SearchWindow = () => {
 
           {/* Search Button */}
           <button
-            onClick={handleSearch}
+            onClick={() => handleSearch(query)}  // Trigger LLM search manually
             className="px-4 py-2 bg-royal-velvet text-white rounded-r-lg transition duration-300 transform active:scale-110"
             aria-label="Submit Search"
           >
@@ -144,6 +179,7 @@ const SearchWindow = () => {
           </button>
         </div>
 
+        {/* Results */}
         {results.length > 0 && (
           <ul className="max-h-80 overflow-y-auto absolute z-10 w-full mt-4 bg-crystal-snow border border-indigo-200 rounded-lg shadow-lg">
             {results.map((item) => (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { FiMic, FiMicOff } from 'react-icons/fi'; // For microphone icons
+import micIcon from '../assets/oral.png'; // Import the microphone image
 
 const Modal = ({ isOpen, closeModal, title, content }) => {
   const [isReading, setIsReading] = useState(false);
@@ -61,7 +61,11 @@ const Modal = ({ isOpen, closeModal, title, content }) => {
           className="absolute bottom-4 right-4 p-2 bg-indigo-500 text-white rounded-full shadow-md hover:bg-indigo-700 transition"
           aria-label="Toggle speech"
         >
-          {isReading ? <FiMicOff className="h-6 w-6" /> : <FiMic className="h-6 w-6" />} {/* Initial state shows FiMicOff */}
+          <img 
+            src={micIcon} 
+            alt="Microphone Icon" 
+            className={`h-12 w-12 ${isReading ? 'line-through' : ''}`} // Add a strike-through when muted
+          />
         </button>
       </div>
     </div>
