@@ -37,6 +37,7 @@ const SearchWindow = () => {
     recognition.onresult = (event) => {
       const spokenQuery = event.results[0][0].transcript;
       setQuery(spokenQuery);
+      handleSearch(spokenQuery);
     };
 
     recognition.onspeechend = () => {
@@ -49,38 +50,6 @@ const SearchWindow = () => {
       setIsListening(false);
     };
   };
-
-  // Fetch data from Sanity as the user types
-  useEffect(() => {
-    const fetchResults = async () => {
-      if (query.trim() === "") {
-        setResults([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const queryStr = `*[_type in ["dentalTopics", "faq", "articles"] && (title match "${query}*" || question match "${query}*")]{
-          title,
-          question,
-          description,
-          content,
-          answer,
-          _id
-        }`;
-
-        const fetchedResults = await client.fetch(queryStr);
-        setResults(fetchedResults);
-        setError("");
-      } catch (error) {
-        console.error("Error fetching from Sanity:", error);
-        setError("Error fetching results, please try again later.");
-      }
-      setLoading(false);
-    };
-
-    fetchResults();
-  }, [query]);
 
   const handleSearch = async (searchQuery = query) => {
     if (searchQuery.trim() === "") {
@@ -118,6 +87,12 @@ const SearchWindow = () => {
     setLoading(false);
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   const openModal = (title, content) => {
     setModalTitle(title);
     setModalContent(content);
@@ -138,6 +113,7 @@ const SearchWindow = () => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="w-full p-4 outline-none bg-transparent"
             placeholder="Search dental topics..."
             aria-label="Search for dental topics"
