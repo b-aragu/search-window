@@ -97,7 +97,7 @@ const SearchWindow = () => {
   const fetchFromGroqBackend = async (searchQuery) => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/groq", {
+      const response = await fetch("https://search-window-1.onrender.com/api/groq", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
